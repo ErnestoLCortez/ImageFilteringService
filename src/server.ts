@@ -35,14 +35,20 @@ import {isURL} from 'validator';
 
     const { image_url } = req.query;
 
+    if (!image_url) {
+      return res.status(400).send("image_url paramter required")
+    } else if (!isURL(image_url)) {
+      return res.status(400).send("Malformed URL")
+    }
+
     return filterImageFromURL(image_url)
       .then( (imagePath) => {
         res.status(200).sendFile(imagePath)
-        return imagePath
-      })
-      .then((imagePath) => {
         res.on('finish', () => deleteLocalFiles([imagePath]))
-      });
+      })
+      .catch( (err) => {
+        res.status(500).send("Server error")
+      })
   });
   // Root Endpoint
   // Displays a simple message to the user
