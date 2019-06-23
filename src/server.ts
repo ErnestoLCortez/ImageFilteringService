@@ -1,6 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
+import {isURL} from 'validator';
 
 (async () => {
 
@@ -30,7 +31,25 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   /**************************************************************************** */
 
   //! END @TODO1
-  
+  app.get("/filteredimage", async ( req, res ) => {
+
+    const { image_url } = req.query;
+
+    if (!image_url) {
+      return res.status(400).send("image_url parameter is required.");
+    } else if (!isURL(image_url)) {
+      return res.status(400).send("Malformed URL.");
+    }
+
+    return filterImageFromURL(image_url)
+      .then( (imagePath) => {
+        res.status(200).sendFile(imagePath);
+        res.on('finish', () => deleteLocalFiles([imagePath]));
+      })
+      .catch( (err) => {
+        res.status(500).send("Server error");
+      })
+  });
   // Root Endpoint
   // Displays a simple message to the user
   app.get( "/", async ( req, res ) => {
